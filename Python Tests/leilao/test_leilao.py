@@ -6,12 +6,6 @@ from .dominio import Usuario, Lance, Leilao
 class TestLeilao(TestCase):
     
     def setUp(self):
-        self.gui  = Usuario('Gui')
-        self.yuri = Usuario('Yuri')
-        self.vini = Usuario('Vinicius')
-        self.lance_do_gui = Lance(self.gui, 150.0)
-        self.lance_do_yuri = Lance(self.yuri, 100.0)
-        self.lance_do_vini = Lance(self.vini, 200.0)
         self.leilao = Leilao('Celular')
         
     def criar_lance(self, nome, valor):
