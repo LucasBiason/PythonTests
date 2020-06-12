@@ -22,25 +22,28 @@ class Leilao:
     def __init__(self, descricao):
         self.descricao = descricao
         self.__lances = []
+        self.maior_lance = None
+        self.menor_lance = None
 
     @property
     def lances(self):
-        return self.__lances
-
-class Avaliador:
+        return self.__lances[:]
     
-    def __init__(self):
-        self.maior_lance = 0.0
-        self.menor_lance = 0.0
+    def novo_lance(self,lance):
+        self.__lances.append(lance)
+        
+       if self.maior_lance is None:
+            self.maior_lance = lance.valor
+        elif lance.valor > self.maior_lance:
+            self.maior_lance = lance.valor
+       
+       if self.menor_lance is None:
+            self.menor_lance = lance.valor
+        elif lance.valor < self.menor_lance:
+            self.menor_lance = lance.valor
     
-    def avalia(self, leilao: Leilao):
-        self.maior_lance = leilao.lances[0].valor
-        self.menor_lance = leilao.lances[0].valor
-        
-        for lance in leilao.lances:
-            if lance.valor > self.maior_lance:
-                self.maior_lance = lance.valor
-            if lance.valor < self.menor_lance:
-                self.menor_lance = lance.valor
-                
-        
+    @property
+    def first_value(self):
+        if not self.__lances:
+            return 0
+        return self.__lances[0].valor
