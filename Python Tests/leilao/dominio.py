@@ -32,12 +32,12 @@ class Leilao:
     def novo_lance(self,lance):
         self.__lances.append(lance)
         
-       if self.maior_lance is None:
+        if self.maior_lance is None:
             self.maior_lance = lance.valor
         elif lance.valor > self.maior_lance:
             self.maior_lance = lance.valor
        
-       if self.menor_lance is None:
+        if self.menor_lance is None:
             self.menor_lance = lance.valor
         elif lance.valor < self.menor_lance:
             self.menor_lance = lance.valor
