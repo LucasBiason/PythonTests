@@ -3,7 +3,7 @@ from unittest import TestCase
 from .dominio import Usuario, Lance, Leilao
 
 
-class TestAvaliador(TestCase):
+class TestLeilao(TestCase):
     
     def setUp(self):
         self.gui  = Usuario('Gui')
@@ -34,6 +34,20 @@ class TestAvaliador(TestCase):
         self.criar_lance('Gui', 150.0)
         self.criar_lance('Yuri', 100.0)
         self.avaliar(100.0 , 200.0)
+        
+    def test_case003(self):
+        ''' > Deve permitir propor lance caso não tenha lances '''
+        self.criar_lance('Gui', 150.0)
+        self.assertEqual(1, len(self.leilao.lances))
+        
+        ''' > Deve permitir propor lance caso o ultimo usuario seja deferente '''
+        self.criar_lance('Yuri', 100.0)
+        self.assertEqual(2, len(self.leilao.lances))
+        
+        ''' > Não deve permitir propor lance caso o ultimo usuario seja o mesmo '''
+        self.criar_lance('Gui', 300.0)
+        self.assertEqual(2, len(self.leilao.lances))
+        
 
 #if __name__ == '__main__':
 #    unittest.main()
