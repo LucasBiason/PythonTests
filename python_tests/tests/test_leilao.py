@@ -1,6 +1,7 @@
 import unittest
 from unittest import TestCase
 from python_tests.leilao.dominio import Usuario, Lance, Leilao
+from python_tests.leilao.exceptions import LanceInvalido
 
 
 class TestLeilao(TestCase):
@@ -27,7 +28,7 @@ class TestLeilao(TestCase):
     def test_case002(self):
         ''' Não deve deixar entrar lance se for o valor for menor que o ultimo '''
         self.criar_lance('Vinicius', 200.0, 500.0)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(LanceInvalido):
             self.criar_lance('Gui', 150.0, 500.0)
         self.assertEqual(1, len(self.leilao.lances))
         
@@ -43,7 +44,7 @@ class TestLeilao(TestCase):
     def test_case004(self):
         ''' > Não deve permitir propor lance caso o ultimo usuario seja o mesmo '''
         self.criar_lance('Yuri', 100.0, 500.0)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(LanceInvalido):
             self.criar_lance('Yuri', 300.0, 500.0)
         self.assertEqual(1, len(self.leilao.lances))
             

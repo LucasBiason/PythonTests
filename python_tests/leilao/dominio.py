@@ -1,4 +1,4 @@
-import sys
+from .exceptions import LanceInvalido
 
 class Usuario:
 
@@ -16,7 +16,7 @@ class Usuario:
     
     def novo_lance(self, leilao, valor):
         if valor > self.__carteira:
-            raise ValueError('Não pode propor um lance maior que o valor da carteira')
+            raise LanceInvalido('Não pode propor um lance maior que o valor da carteira')
         lance = Lance(self, valor)
         leilao.novo_lance(lance)
         self.__carteira -= valor
@@ -41,25 +41,33 @@ class Leilao:
         return self.__lances[:]
     
     def novo_lance(self,lance):
-        if self.__lances:
-            if self.__lances[-1].usuario.nome == lance.usuario.nome:
-                raise ValueError('O mesmo usuário não pode propor dois lances seguidos.')
-            
-            if self.__lances[-1].valor > lance.valor:
-                ultimo = self.__lances[-1].valor
-                raise ValueError(f'O valor do lance deve ser maior que o último: {ultimo}')
-        
+        if self.sem_lances:
+            self.menor_lance = lance.valor
+        else:
+            self._valida_lance(lance)
+        self.maior_lance = lance.valor
         self.__lances.append(lance)
-        
-        if self.maior_lance is None:
-            self.maior_lance = lance.valor
-        elif lance.valor > self.maior_lance:
-            self.maior_lance = lance.valor
+            
+    @property
+    def ultimo_lance(self):
+        return self.__lances[-1]
     
-        if self.menor_lance is None:
-            self.menor_lance = lance.valor
-        elif lance.valor < self.menor_lance:
-            self.menor_lance = lance.valor
+    @property
+    def sem_lances(self):
+        return not bool(self.__lances)
+    
+    def _valida_lance(self, lance):
+        if self._valida_usuario(lance):
+            raise LanceInvalido('O mesmo usuário não pode propor dois lances seguidos.')
+        if self._valida_valor(lance):
+            raise LanceInvalido(f'O valor do lance deve ser maior que o último: {self.ultimo_lance.valor}')
+        return True
+        
+    def _valida_usuario(self, lance):
+        return self.ultimo_lance.usuario.nome == lance.usuario.nome
+        
+    def _valida_valor(self, lance):
+        return self.ultimo_lance.valor > lance.valor
     
     @property
     def first_value(self):

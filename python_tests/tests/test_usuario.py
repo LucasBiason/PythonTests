@@ -1,6 +1,6 @@
-
 import pytest
 from python_tests.leilao.dominio import Usuario, Leilao
+from python_tests.leilao.exceptions import LanceInvalido
 
 @pytest.fixture
 def user():
@@ -23,5 +23,5 @@ def test_case002(user, leilao):
     
 def test_case003(user, leilao):
     ''' Não deve permitir quando o valor maior que a carteira '''
-    with pytest.raises(ValueError):
+    with pytest.raises(LanceInvalido):
         user.novo_lance(leilao, 200.0)
