@@ -1,0 +1,4 @@
+
+* Precisamos de dublês para simular acesso à internet, ao sistema de arquivos e banco de dados.
+Eles servem para substituir partes do sistema que não estão implementadas ou para simular comportamentos
+para que os testes tenham resultados determinísticos
