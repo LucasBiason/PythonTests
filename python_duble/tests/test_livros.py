@@ -53,9 +53,92 @@ class StubHTTPResponse:
 def stub_de_urlopen(url, timeout):
     return StubHTTPResponse()
 
+@skip("")
 def  test_consultar_livros_005():
-    ''' Executar Requisição retorna tipo string '''
+    ''' Executar Requisição retorna tipo string (criando o duble por funcao) '''
     with patch("python_duble.colecao.livros.urlopen", stub_de_urlopen):
         print(stub_de_urlopen)
         resultado = executar_requisicao("https://buscarlivros?autor=Jk+Rowlings")
         assert type(resultado) == str
+
+@skip("")
+def  test_consultar_livros_006():
+    ''' Executar Requisição retorna tipo string (criando o duble diretamente)'''
+    with patch("python_duble.colecao.livros.urlopen")  as duble_de_urlopen:
+        duble_de_urlopen.return_value = StubHTTPResponse()
+        resultado = executar_requisicao("https://buscarlivros?author=Jk+Rowlings")
+        assert type(resultado) == str
+        
+@skip("")
+def  test_consultar_livros_007():
+    ''' Executar Requisição retorna tipo string 
+    (criando o duble com return_value nopatch)'''
+    with patch("python_duble.colecao.livros.urlopen", 
+               return_value=StubHTTPResponse()):
+        resultado = executar_requisicao("https://buscarlivros?author=Jk+Rowlings")
+        assert type(resultado) == str
+    
+
+@skip("")
+@patch("python_duble.colecao.livros.urlopen", return_value=StubHTTPResponse())
+def  test_consultar_livros_008(duble_de_urlopen):
+    ''' Executar Requisição retorna tipo string 
+    (criando o duble com decorator)'''
+    resultado = executar_requisicao("https://buscarlivros?author=Jk+Rowlings")
+    assert type(resultado) == str
+    
+
+class Dummy:
+    pass
+
+def stub_de_urlopen_que_levanta_excecao_http_error(url, timeout):
+    fp = mock_open
+    fp.close = Dummy
+    raise HTTPError(Dummy(), Dummy(), "mensagem de erro", Dummy(), fp)
+    
+@skip("")
+def test_consultar_livros_009():
+    ''' Levantar excecao do tipo http error '''
+    with patch("python_duble.colecao.livros.urlopen", 
+               stub_de_urlopen_que_levanta_excecao_http_error):
+        with pytest.raises(HTTPError) as excecao:
+            executar_requisicao("http://")
+        assert "mensagem de erro" in str(excecao.value)
+            
+
+@skip("")
+@patch("python_duble.colecao.livros.urlopen")
+def test_consultar_livros_010(duble_de_urlopen):
+    ''' Levantar excecao do tipo http error '''
+    fp = mock_open
+    fp.close = Mock()
+    duble_de_urlopen.side_effect = HTTPError(
+        Mock(), Mock(), "mensagem de erro", Mock(), fp
+    )
+    with pytest.raises(HTTPError) as excecao:
+        executar_requisicao("http://")
+        assert "mensagem de erro" in str(excecao.value)
+        
+
+def test_consultar_livros_011(caplog):
+    ''' Loga excecao '''
+    with patch("python_duble.colecao.livros.urlopen",
+                stub_de_urlopen_que_levanta_excecao_http_error):
+        resultado = executar_requisicao("http://")
+        mensagem_de_erro = "mensagem de erro"
+        assert len(caplog.records) == 1
+        for registro in caplog.records:
+            assert mensagem_de_erro in registro.message
+
+
+@patch("python_duble.colecao.livros.urlopen")
+def test_consultar_livros_012(stub_urlopen, caplog):
+    fp = mock_open
+    fp.close = Mock()
+    stub_urlopen.side_effect = HTTPError(
+        Mock(), Mock(), "mensagem de erro", Mock(), fp
+    )
+    executar_requisicao("http://")
+    assert len(caplog.records) == 1
+    for registro in caplog.records:
+        assert "mensagem de erro" in registro.message

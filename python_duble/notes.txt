@@ -3,4 +3,7 @@
 Eles servem para substituir partes do sistema que não estão implementadas ou para simular comportamentos
 para que os testes tenham resultados determinísticos
 
-* Stub: fornece os dados pré-configurados, ou  seja, fornce entradas indiretas.
+* Stub: fornece os dados pré-configurados, ou  seja, fornece entradas indiretas.
+
+* Um dublê do tipo Dummy serve para substituir parâmetros obrigatórios, mas não são usados na verificação do caso de teste e, por isso, são irrelevantes
+* Um dublê do tipo Stub fornece dados fabricados ou comportamentos esperados para serem usados na verificação do caso de teste
