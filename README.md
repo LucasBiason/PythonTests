@@ -4,12 +4,14 @@ Mini Projetos de Cursos, Livros e artigos sobre testes em python.
 Todos os projetos são focados nas bibliotecas de testes e técnicas para testes em python.
 
 
+
 ## Curso de Testes automatizados: TDD com Python
 Pasta: python_tests
 
 Link: https://cursos.alura.com.br/course/tdd-com-python
 
 Sobre: Projeto de um leilao, aplicando conceitos basicos de testes em python
+
 
 
 ## Curso de Testes em Python: trabalhando com dublês de testes
