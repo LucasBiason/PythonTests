@@ -15,6 +15,10 @@ para que os testes tenham resultados determinísticos
 captura e armazena as informações geradas pela unidade testada.
 - Mock serve ao mesmo tempo para programar comportamento esperado e capturar as saídas indiretas para serem usados na verificação do caso de teste
 
+* Fake: um dublê do tipo Fake é uma implementação simplificada de uma dependência da unidade sob teste
+Exemplo: simular uma operação no banco de dados sem ter o efeito colateral nele
+
+
 Diferentemente de testes de unidade clássicos, os testes com dublês têm o foco em verificação de comportamento, enquanto os testes clássicos fazem a verificação de estado. 
 
 
@@ -111,4 +115,11 @@ def test_pedido_nao_diminui_o_estoque_se_nao_pode_ser_atendido():
     estoque.diminuir.assert_called_once_with("Produto A", 5)
     assert atendido is False
 
-Usar ou não dublês tem suas vantagens e desvantagens. Por um lado, o uso de dublês foca na unidade sob teste, isolando-a de qualquer outra unidade. Mas, por outro lado, como os colaboradores reais não estão sendo testados, e por isso é necessário que eles mesmos sejam, em algum momento, as unidades sob teste. Quando usamos testes de unidade sem os dublês, de alguma forma, estamos também testando seus colaboradores.
+Usar ou não dublês tem suas vantagens e desvantagens. Por um lado, o uso de dublês foca na unidade sob teste, isolando-a de qualquer outra unidade. Mas, por outro lado, como os colaboradores reais não estão sendo testados, e por isso é necessário que eles mesmos sejam, em algum momento, as unidades sob teste. Quando usamos testes de unidade sem os dublês, 
+
+
+
+
+Os dublês de testes surgiram de demandas no desenvolvimento de softwares. São práticas no desenvolvimento e podem ser adotadas e implementadas em linguagens de programação. 
+
+Leitura recomendada: xunitpatterns.com/Test Double Patterns.html

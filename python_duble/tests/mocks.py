@@ -39,6 +39,7 @@ class DubleLogging:
     def exception(self, mensagem):
         self._mensagens.append(mensagem)
 
+
 def duble_makedirs(diretorio):
     raise OSError("Não foi possível criar diretório %s" % diretorio)
 
@@ -75,3 +76,11 @@ class MockConsulta:
 
 def fake_inserir_registros(dados):
     return len(dados)
+
+class FakeDB:
+    def __init__(self):
+        self._registros = []
+
+    def inserir_registros(self, dados):
+        self._registros.extend(dados)
+        return len(dados)

@@ -213,6 +213,7 @@ def test_consultar_livros_018(mock_executar_requisicao, resultado_em_duas_pagina
         call("https://buscarlivros?q=python&page=2"),
     ]
 
+
 @patch(PATH_BASE+"executar_requisicao")
 def test_consultar_livros_019(mock_executar_requisicao, resultado_em_tres_paginas):
     ''' test baixar livros chama executar requisicao 3 vezes '''
@@ -232,6 +233,7 @@ def test_consultar_livros_019(mock_executar_requisicao, resultado_em_tres_pagina
             call(resultado_em_tres_paginas[2]),
         ]
 
+
 @patch(PATH_BASE+"executar_requisicao")
 def test_consultar_livros_020(mock_executar_requisicao, resultado_em_tres_paginas):
     ''' test baixar livros chama executar requisicao 3 vezes '''
@@ -246,6 +248,37 @@ def test_consultar_livros_020(mock_executar_requisicao, resultado_em_tres_pagina
             call(arquivo[1], resultado_em_tres_paginas[1]),
             call(arquivo[2], resultado_em_tres_paginas[2]),
         ]
+
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_baixar_livros_001(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_2):
+    ''' test baixar livros chama escrever em arquivo para pagina 1 e 3 '''
+    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_2
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
+        mock_escrever.side_effect = [None, None]
+        baixar_livros(arquivo, None, None, "python")
+        assert mock_escrever.call_args_list == [
+            call(arquivo[0], resultado_em_tres_paginas_erro_na_pagina_2[0]),
+            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_2[2]),
+        ]
+
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_baixar_livros_002(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_1):
+    ''' test baixar livros chama escrever em arquivo para pagina 2 e 3 '''
+    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_1
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
+        mock_escrever.side_effect = [None, None]
+        baixar_livros(arquivo, None, None, "python")
+        assert mock_escrever.call_args_list == [
+            call(arquivo[1], resultado_em_tres_paginas_erro_na_pagina_1[1]),
+            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_1[2]),
+        ]
+        
 
 def test_registrar_livros_001(resultado_em_tres_paginas):
     ''' test registrar livros chama ler arquivo 3 vezes '''
@@ -289,32 +322,43 @@ def test_registrar_livros_002(stub_ler_arquivo, conteudo_de_4_arquivos):
             call(conteudo_de_4_arquivos[3]),
         ]
         
+        
+@patch(PATH_BASE+"ler_arquivo")
+def test_registrar_livros_003(stub_ler_arquivo, conteudo_de_4_arquivos):
+    ''' test registrar livros chama inserir registros '''
+    arquivos = [
+        "/tmp/arquivos1",
+        "/tmp/arquivos2",
+        "/tmp/arquivos3",
+    ]
+    conteudo_de_3_arquivos = conteudo_de_4_arquivos[1:]
+    stub_ler_arquivo.side_effect = conteudo_de_3_arquivos
 
-@patch(PATH_BASE+"executar_requisicao")
-def test_baixar_livros_001(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_2):
-    ''' test baixar livros chama escrever em arquivo para pagina 1 e 3 '''
-    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_2
-    Resposta.qtd_docs_por_pagina = 3
-    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
-    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
-        mock_escrever.side_effect = [None, None]
-        baixar_livros(arquivo, None, None, "python")
-        assert mock_escrever.call_args_list == [
-            call(arquivo[0], resultado_em_tres_paginas_erro_na_pagina_2[0]),
-            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_2[2]),
-        ]
+    qtd = registrar_livros(arquivos, fake_inserir_registros)
+    assert qtd == 12
 
 
-@patch(PATH_BASE+"executar_requisicao")
-def test_baixar_livros_002(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_1):
-    ''' test baixar livros chama escrever em arquivo para pagina 2 e 3 '''
-    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_1
-    Resposta.qtd_docs_por_pagina = 3
-    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
-    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
-        mock_escrever.side_effect = [None, None]
-        baixar_livros(arquivo, None, None, "python")
-        assert mock_escrever.call_args_list == [
-            call(arquivo[1], resultado_em_tres_paginas_erro_na_pagina_1[1]),
-            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_1[2]),
-        ]
+
+@patch(PATH_BASE+"ler_arquivo")
+def test_registrar_livros_004(stub_ler_arquivo, resultado_em_tres_paginas):
+    ''' test registrar livros insere 12 registros na base de dados '''
+    arquivos = ["/tmp/arq1", "/tmp/arq2", "/tmp/arq3"]
+    stub_ler_arquivo.side_effect = resultado_em_tres_paginas
+    fake_db = FakeDB()
+    qtd = registrar_livros(arquivos, fake_db.inserir_registros)
+    assert qtd == 8
+    assert fake_db._registros[0] == {
+        "author": "Luciano Ramalho",
+        "title": "Python Fluente",
+    }
+
+@patch(PATH_BASE+"ler_arquivo")
+def test_registrar_livros_005(stub_ler_arquivo, resultado_em_duas_paginas):
+    ''' test registrar livros insere 5 registros '''
+    stub_ler_arquivo.side_effect = resultado_em_duas_paginas
+    arquivos = ["/tmp/arq1", "/tmp/arq2"]
+
+    fake_db = MagicMock()
+    fake_db.inserir_registros = fake_inserir_registros
+    qtd = registrar_livros(arquivos, fake_db.inserir_registros)
+    assert qtd == 5
