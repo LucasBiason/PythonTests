@@ -1,0 +1,13 @@
+
+        {
+            "num_docs": 8,
+            "docs": [
+                {"author": "Kenneth Reitz",
+                 "title": "O Guia do Mochileiro Python"
+                },
+                 {"author": "Wes McKinney",
+                 "title": "Python Para Análise de Dados"
+                }
+            ]
+        }
+        

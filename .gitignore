@@ -72,5 +72,5 @@ env.bak/
 venv.bak/
 
 # End of https://www.gitignore.io/api/python,pycharm
-
+tmp/
 tmp/*

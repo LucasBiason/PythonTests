@@ -1,70 +1,15 @@
 import pytest
 from urllib.error import HTTPError
-from unittest.mock import patch, mock_open, Mock, MagicMock
+from unittest.mock import patch, mock_open, Mock, MagicMock, call
 from unittest import skip
 
-from python_duble.colecao.livros import consultar_livros, executar_requisicao,\
-    escrever_em_arquivo, mandar_email
+from python_duble.tests.fixtures import *
+from python_duble.tests.mocks import *
+from python_duble.colecao.livros import *
 
 URL_BUSCADOR ="https://buscador"
 PATH_BASE = 'python_duble.colecao.livros.'
 
-#### Stbs, Dummys, ...
-
-class StubHTTPResponse:
-    def read(self):
-        return b""
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, param1, param2, param3):
-        pass
-    
-    
-def stub_de_urlopen(url, timeout):
-    return StubHTTPResponse()
-
-
-class Dummy:
-    pass
-
-
-def stub_de_urlopen_que_levanta_excecao_http_error(url, timeout):
-    fp = mock_open
-    fp.close = Dummy
-    raise HTTPError(Dummy(), Dummy(), "mensagem de erro", Dummy(), fp)
-
-
-class DubleLogging:
-    def __init__(self):
-        self._mensagens = []
-
-    @property
-    def mensagens(self):
-        return self._mensagens
-
-    def exception(self, mensagem):
-        self._mensagens.append(mensagem)
-
-def duble_makedirs(diretorio):
-    raise OSError("Não foi possível criar diretório %s" % diretorio)
-
-class SpyFP:
-    def __init__(self):
-        pass
-    
-    def __enter__(self):
-        return self
-
-    def write(self, conteudo):
-        self._conteudo = conteudo
-
-    def __exit__(self, *args):
-        pass
-    
-
-#### Tests
     
 @patch(PATH_BASE+"urlopen", return_value=StubHTTPResponse())
 def  test_consultar_livros_001(stub_urlopen):
@@ -76,7 +21,7 @@ def  test_consultar_livros_001(stub_urlopen):
 @patch(PATH_BASE+"urlopen", return_value=StubHTTPResponse())
 def  test_consultar_livros_002(stub_urlopen):
     ''' Chama preparar dados para requisição uma vez e com os mesmos
-    parâmetrosde consultar livros '''
+    parâmetros de consultar livros '''
     ## Com isso consigo verificar se a função foi chamada uma vez 
     with patch(PATH_BASE+'preparar_dados_para_requisicao') as stub:
         consultar_livros("Agatha Christie")
@@ -97,7 +42,7 @@ def test_consultar_livros_003(stub_urlopen):
 
 @patch(PATH_BASE+"urlopen", return_value=StubHTTPResponse())
 def test_consultar_livros_004(stub_urlopen):
-    ''' Chama executar reuisição usando retorno do obter_url'''
+    ''' Chama executar requisição usando retorno do obter_url'''
     with patch(PATH_BASE+"obter_url") as stub_obter_url:
         stub_obter_url.return_value = URL_BUSCADOR
         with patch(PATH_BASE+"executar_requisicao") as spy_executar_requisicao:
@@ -109,7 +54,6 @@ def test_consultar_livros_004(stub_urlopen):
 def  test_consultar_livros_005():
     ''' Executar Requisição retorna tipo string (criando o stub por funcao) '''
     with patch(PATH_BASE+"urlopen", stub_de_urlopen):
-        print(stub_de_urlopen)
         resultado = executar_requisicao("https://buscarlivros?autor=Jk+Rowlings")
         assert type(resultado) == str
 
@@ -223,6 +167,7 @@ def test_consultar_livros_015(stub_open):
     escrever_em_arquivo(arquivo, conteudo)
     assert spy_fp._conteudo == conteudo
 
+
 @patch(PATH_BASE+"open")
 def test_consultar_livros_016(stub_open):
     ''' Escrever em arquivo chama write'''
@@ -242,3 +187,134 @@ def test_mandar_email():
         m = mock_smtp("localhost")
         mandar_email("from", "to", "bla bla bla")
         m.sendmail.assert_called_once_with("from", "to", "bla bla bla")
+        
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_consultar_livros_017(stub_executar_requisicao, resultado_em_duas_paginas):
+    ''' test baixar livros instancia Consulta uma vez '''
+    mock_consulta = MockConsulta()
+    stub_executar_requisicao.side_effect = resultado_em_duas_paginas
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"Consulta", mock_consulta.Consulta):
+        baixar_livros(arquivo, None, None, "Python")
+        mock_consulta.verificar()
+
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_consultar_livros_018(mock_executar_requisicao, resultado_em_duas_paginas):
+    ''' test baixar livros chama executar requisicao n vezes '''
+    mock_executar_requisicao.side_effect = resultado_em_duas_paginas
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    baixar_livros(arquivo, None, None, "python")
+    assert mock_executar_requisicao.call_args_list == [
+        call("https://buscarlivros?q=python&page=1"),
+        call("https://buscarlivros?q=python&page=2"),
+    ]
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_consultar_livros_019(mock_executar_requisicao, resultado_em_tres_paginas):
+    ''' test baixar livros chama executar requisicao 3 vezes '''
+    mock_executar_requisicao.side_effect = resultado_em_tres_paginas
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"Resposta") as MockResposta:
+        MockResposta.side_effect = [
+            Resposta(resultado_em_tres_paginas[0]),
+            Resposta(resultado_em_tres_paginas[1]),
+            Resposta(resultado_em_tres_paginas[2]),
+        ]
+        baixar_livros(arquivo, None, None, "python")
+        assert MockResposta.call_args_list == [
+            call(resultado_em_tres_paginas[0]),
+            call(resultado_em_tres_paginas[1]),
+            call(resultado_em_tres_paginas[2]),
+        ]
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_consultar_livros_020(mock_executar_requisicao, resultado_em_tres_paginas):
+    ''' test baixar livros chama executar requisicao 3 vezes '''
+    mock_executar_requisicao.side_effect = resultado_em_tres_paginas
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["/tmp/arquivo1", "/tmp/arquivo2", "/tmp/arquivo3"]
+    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
+        mock_escrever.return_value = None
+        baixar_livros(arquivo, None, None, "python")
+        assert mock_escrever.call_args_list == [
+            call(arquivo[0], resultado_em_tres_paginas[0]),
+            call(arquivo[1], resultado_em_tres_paginas[1]),
+            call(arquivo[2], resultado_em_tres_paginas[2]),
+        ]
+
+def test_registrar_livros_001(resultado_em_tres_paginas):
+    ''' test registrar livros chama ler arquivo 3 vezes '''
+    arquivos = [
+        "tmp/arq1",
+        "tmp/arq2",
+        "tmp/arq3",
+    ]
+    with patch(PATH_BASE+"ler_arquivo") as mock_ler_arquivo:
+        mock_ler_arquivo.side_effect = resultado_em_tres_paginas
+        registrar_livros(arquivos, fake_inserir_registros)
+        assert mock_ler_arquivo.call_args_list == [
+            call(arquivos[0]),
+            call(arquivos[1]),
+            call(arquivos[2]),
+        ]
+
+
+@patch(PATH_BASE+"ler_arquivo")
+def test_registrar_livros_002(stub_ler_arquivo, conteudo_de_4_arquivos):
+    ''' test registrar livros instancia Resposta 4 vezes '''
+    stub_ler_arquivo.side_effect = conteudo_de_4_arquivos
+    arquivos = [
+        "tmp/arq1",
+        "tmp/arq2",
+        "tmp/arq3",
+        "tmp/arq4",
+    ]
+    with patch(PATH_BASE+"Resposta") as MockResposta:
+        MockResposta.side_effect = [
+            Resposta(conteudo_de_4_arquivos[0]),
+            Resposta(conteudo_de_4_arquivos[1]),
+            Resposta(conteudo_de_4_arquivos[2]),
+            Resposta(conteudo_de_4_arquivos[3]),
+        ]
+        registrar_livros(arquivos, fake_inserir_registros)
+        assert MockResposta.call_args_list == [
+            call(conteudo_de_4_arquivos[0]),
+            call(conteudo_de_4_arquivos[1]),
+            call(conteudo_de_4_arquivos[2]),
+            call(conteudo_de_4_arquivos[3]),
+        ]
+        
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_baixar_livros_001(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_2):
+    ''' test baixar livros chama escrever em arquivo para pagina 1 e 3 '''
+    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_2
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
+        mock_escrever.side_effect = [None, None]
+        baixar_livros(arquivo, None, None, "python")
+        assert mock_escrever.call_args_list == [
+            call(arquivo[0], resultado_em_tres_paginas_erro_na_pagina_2[0]),
+            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_2[2]),
+        ]
+
+
+@patch(PATH_BASE+"executar_requisicao")
+def test_baixar_livros_002(stub_executar_requisicao, resultado_em_tres_paginas_erro_na_pagina_1):
+    ''' test baixar livros chama escrever em arquivo para pagina 2 e 3 '''
+    stub_executar_requisicao.side_effect = resultado_em_tres_paginas_erro_na_pagina_1
+    Resposta.qtd_docs_por_pagina = 3
+    arquivo = ["tmp/arquivo1", "tmp/arquivo2", "tmp/arquivo3"]
+    with patch(PATH_BASE+"escrever_em_arquivo") as mock_escrever:
+        mock_escrever.side_effect = [None, None]
+        baixar_livros(arquivo, None, None, "python")
+        assert mock_escrever.call_args_list == [
+            call(arquivo[1], resultado_em_tres_paginas_erro_na_pagina_1[1]),
+            call(arquivo[2], resultado_em_tres_paginas_erro_na_pagina_1[2]),
+        ]
