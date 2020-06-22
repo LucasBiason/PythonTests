@@ -123,3 +123,54 @@ Usar ou não dublês tem suas vantagens e desvantagens. Por um lado, o uso de du
 Os dublês de testes surgiram de demandas no desenvolvimento de softwares. São práticas no desenvolvimento e podem ser adotadas e implementadas em linguagens de programação. 
 
 Leitura recomendada: xunitpatterns.com/Test Double Patterns.html
+
+Quando usar:
+ - Para substituir:
+ * partes lentas do sistema (operações de Entrada/Saida)
+ * comportamentonão determinísticos (acesso a Internet)
+ * componentes não implementados (qualquer outra unidade do
+ sistema quenão esteja pronta, banco de dados) ou 
+ implementado por terceiros
+ * partes que podem causar efeitos colaterais indesejáveis como
+ criação/deleão de arquivos reais, criação ou deleção de registros em
+ base de dados
+
+ Quando não usar:
+ * podem deixar seu caso de teste muito acoplado com a unidade e 
+ dificl de mantê-lo
+ * pode indicar que o código da unidade está muito acoplado (
+     muitas dependencias)
+ * você pode estar testando o mock ao invés de testar a unidade (
+     falso positivos)
+ 
+Exemplo de acoplamentos do caso de testes com a unidade:
+
+def obter_dados_de_arquivo():
+    with open("/tmp/arquivo") as fp:
+        conteudo = fp.read()
+    return conteudo
+
+def test_obter_dados_de_arquivo():
+    with patch("open") as double:
+        duble.return_value = fake_arquivo
+    
+Mude para...
+
+from pathlib import Path
+
+def obter_dados_de_arquivo():
+   path = Path("/tmp/arquivo")
+   with path.open() as fp:
+       conteudo = fp.read()
+    return conteudo
+
+(Solução:)
+
+def test_obter_dados_de_arquivo(tmpdir):
+    arquivo = tmpdir.join("arquivo")
+    arquivo.write("conteudo do arquivo")
+
+    resultado = obter_dados_de_arquivo(arquivo)
+    assert "conteudo do arquivo" == resultado
+
+(ou seja... nao usar senão necessário)
