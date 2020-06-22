@@ -7,3 +7,5 @@ para que os testes tenham resultados determinísticos
 
 * Um dublê do tipo Dummy serve para substituir parâmetros obrigatórios, mas não são usados na verificação do caso de teste e, por isso, são irrelevantes
 * Um dublê do tipo Stub fornece dados fabricados ou comportamentos esperados para serem usados na verificação do caso de teste
+
+* Spy: captura e armazena as informações geradas pela unidade testada
